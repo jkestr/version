@@ -1,0 +1,30 @@
+Version
+=======
+
+Tracks changes on an object through time, no more, no less. Each time a versioned
+object has validated and is about to save, the changes provided by 
+ActiveRecord::Dirty are stored for later use. Procs may be used to customize the
+stored value of each field, allowing diffs or other compress version formats to
+be plugged right in.
+
+
+Example
+=======
+
+class Person < ActiveRecord::Base 
+
+	acts_as_versioned
+
+end
+
+
+person = Person.new
+person.versions.count # => 0
+
+person.update_attribute(:name_first, "Cookie Monster")
+
+person.versions.count # => 1
+person.versions # => [{:name_first => [nil, "Cookie Monster"]}]
+
+
+Copyright (c) 2009 Jacob Basham, released under the MIT license
