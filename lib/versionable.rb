@@ -28,7 +28,7 @@ module Pigeons
                    :readonly => :true) 
 
           after_create Versionator.new(procs) 
-          before_save  Versionator.new(procs), :unless => :new_record? 
+          before_update Versionator.new(procs)
         end
       end
 
@@ -38,7 +38,7 @@ module Pigeons
           @procs, @data = args, Hash.new
         end
 
-        def before_save(versionable)
+        def before_update(versionable)
 
           for key in versionable.changes.keys 
             value = @data[key] = versionable.changes[key]
@@ -53,7 +53,7 @@ module Pigeons
           versionable.versions.create(:values => @data)
           return true
         end
-        alias_method(:after_create, :before_save)
+        alias_method(:after_create, :before_update)
 
       end
 
