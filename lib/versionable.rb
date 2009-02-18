@@ -16,41 +16,52 @@ module Pigeons
         #
         # class User
         #   
-        #   acts_as_versioned :bio => Proc.new { |old,new| #Diff(old,new) }
+        #   # Just an example, there is no diff library like this that I know of...
+        #   acts_as_versioned :bio => Proc.new { |old,new| Diff(old,new) }
         #
         # end
         #
-        def acts_as_versioned(procs = {})
+        def acts_as_versioned(args = {})
           has_many(:versions,
                    :as => :versionable,
                    :order => "created_at DESC",
                    :dependent => :destroy,
                    :readonly => :true) 
 
-          after_create Versionator.new(procs) 
-          before_update Versionator.new(procs)
+          if args.has_key?(:only)
+            args[:fields] = attribute_names & args.delete(:only)
+          elsif args.has_key?(:except)
+            args[:fields] = attribute_names - args.delete(:except)
+          else
+            args[:fields] = attribute_names
+          end
+          
+          after_create Versionator.new(args) 
+          before_update Versionator.new(args)
         end
       end
 
       class Versionator
 
         def initialize(args = {})
+          @fields = args.delete(:fields)
           @procs, @data = args, Hash.new
         end
 
         def before_update(versionable)
 
-          for key in versionable.changes.keys 
-            value = @data[key] = versionable.changes[key]
+          for field in versionable.changes.keys & @fields 
 
-            if @procs.has_key?(key)
-              value = @procs[key].call(value[0], value[1])
+            unless @procs.has_key?(key)
+              @data[key] = versionable.changes[key]
+            else
+              @data[key] = @procs[key].call(value[0], value[1])
             end
 
-            @data[key] = value
           end
 
           versionable.versions.create(:values => @data)
+
           return true
         end
         alias_method(:after_create, :before_update)
