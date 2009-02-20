@@ -21,6 +21,20 @@ module Pigeons
         #
         # end
         #
+        # You can also control what fields are tracked using :except and :only.
+        #
+        # class User
+        #
+        #   acts_as_versioned :only => [:name_first, :name_last, :workflow_state]
+        #
+        # end
+        #
+        # class Post
+        #
+        #   acts_as_versioned :except => [:raw_source]
+        #
+        # end
+        #
         def acts_as_versioned(args = {})
           has_many(:versions,
                    :as => :versionable,
@@ -28,39 +42,49 @@ module Pigeons
                    :dependent => :destroy,
                    :readonly => :true) 
 
-          if args.has_key?(:only)
-            args[:fields] = attribute_names & args.delete(:only)
-          elsif args.has_key?(:except)
-            args[:fields] = attribute_names - args.delete(:except)
-          else
-            args[:fields] = attribute_names
-          end
-          
-          after_create Versionator.new(args) 
-          before_update Versionator.new(args)
+          options          = Hash.new
+          options[:procs]  = args.reject { |k,v| k == :only || k == :except }
+          options[:fields] = generate_attribute_list(args[:only], args[:except])
+
+          @@_j_versionator = Versionator.new(options)
+          after_create @@_j_versionator 
+          before_update @@_j_versionator
         end
+
+        private
+
+        def generate_attribute_list(only, except)
+          result = self.new.attribute_names
+
+          result &= [only].flatten.collect(&:to_s) unless only.blank?
+          result -= [except].flatten.collect(&:to_s) unless except.blank?
+
+          return result
+        end
+
       end
 
       class Versionator
 
-        def initialize(args = {})
-          @fields = args.delete(:fields)
-          @procs, @data = args, Hash.new
+        def initialize(options = {})
+          @procs  = options[:procs] || {}
+          @fields = options[:fields] || []
         end
 
         def before_update(versionable)
+          values = Hash.new
 
           for field in versionable.changes.keys & @fields 
 
-            unless @procs.has_key?(key)
-              @data[key] = versionable.changes[key]
+            unless @procs.has_key?(field.to_sym)
+              values[field] = versionable.changes[field]
             else
-              @data[key] = @procs[key].call(value[0], value[1])
+              values[field] = @procs[field.to_sym].call(versionable.changes[field])
             end
 
           end
 
-          versionable.versions.create(:values => @data)
+          x = versionable.versions.create(:values => values)
 
           return true
         end
