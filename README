@@ -18,11 +18,12 @@ acts_as_versioned :except => :remote_version_cache
 acts_as_versioned :only => [:fee, :fi, :foo, :fumb], :except => :fi
 
 
-== Wahts This [knew, old] Stuff?
+== |Old School, Knew School|
 By defaut the recorded change is in the format [old_value, new_value], which is great
 for strings and other small data types. But what if your tracking changes to a three 
-trillion page long document? It would be silly to store everything if a user fixed a silly
-typo like 'waht' => 'what'. Customizing the stored value is as easy as proc pie.
+trillion page long document? It would be silly to store the entirety of each version
+if a user fixed a typo like 'waht' to 'what'. Customizing the stored value is only
+a Proc away.
 
 acts_as_versioned :long_document => Proc.new { |old, knew| Diff(old, knew)  }
 
