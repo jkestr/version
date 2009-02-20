@@ -84,7 +84,7 @@ module Pigeons
 
           end
 
-          x = versionable.versions.create(:values => values)
+          versionable.versions.create(:values => values)
 
           return true
         end
