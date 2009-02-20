@@ -46,9 +46,9 @@ module Pigeons
           options[:procs]  = args.reject { |k,v| k == :only || k == :except }
           options[:fields] = generate_attribute_list(args[:only], args[:except])
 
-          @@_j_versionator = Versionator.new(options)
-          after_create @@_j_versionator 
-          before_update @@_j_versionator
+          versionator = Versionator.new(options)
+          after_create versionator 
+          before_update versionator
         end
 
         private
@@ -72,16 +72,11 @@ module Pigeons
         end
 
         def before_update(versionable)
-          values = Hash.new
+          values = versionable.changes.dup
+          values.delete_if { |k,v| !@fields.include?(k)}
 
-          for field in versionable.changes.keys & @fields 
-
-            unless @procs.has_key?(field.to_sym)
-              values[field] = versionable.changes[field]
-            else
-              values[field] = @procs[field.to_sym].call(versionable.changes[field])
-            end
-
+          for key in @procs.keys
+            values[key.to_s] = @procs[key].call(values[key.to_s])  
           end
 
           versionable.versions.create(:values => values)
