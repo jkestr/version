@@ -17,7 +17,7 @@ module Pigeons
         # class User
         #   
         #   # Just an example, there is no diff library like this that I know of...
-        #   acts_as_versioned :bio => Proc.new { |old,new| Diff(old,new) }
+        #   acts_as_versioned :bio => Proc.new { |old, knew| Diff(old, knew) }
         #
         # end
         #
@@ -31,7 +31,7 @@ module Pigeons
         #
         # class Post
         #
-        #   acts_as_versioned :except => [:raw_source]
+        #   acts_as_versioned :except => :raw_source
         #
         # end
         #

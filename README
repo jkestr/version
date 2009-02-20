@@ -8,6 +8,29 @@ stored value of each field, allowing diffs or other compress version formats to
 be plugged right in.
 
 
+== A Who?
+Don't need to track changes on all of the models fields? No problem! Passing along
+field names with :only and :except are here for you, you can even mix and match for
+quick hacks!
+
+acts_as_versioned :only => :name
+acts_as_versioned :except => :remote_version_cache
+acts_as_versioned :only => [:fee, :fi, :foo, :fumb], :except => :fi
+
+
+== Wahts This [knew, old] Stuff?
+By defaut the recorded change is in the format [old_value, new_value], which is great
+for strings and other small data types. But what if your tracking changes to a three 
+trillion page long document? It would be silly to store everything if a user fixed a silly
+typo like 'waht' => 'what'. Customizing the stored value is as easy as proc pie.
+
+acts_as_versioned :long_document => Proc.new { |old, knew| Diff(old, knew)  }
+
+
+== My First Change Is In versions#last? WTH!!?!
+It sounds silly, and the order may go away but the thinking is you'll want to view
+newer changes before older changes.
+
 Example
 =======
 
@@ -25,6 +48,9 @@ person.update_attribute(:name_first, "Cookie Monster")
 
 person.versions.count # => 1
 person.versions # => [{:name_first => [nil, "Cookie Monster"]}]
+
+person.update(:name, "Mr. Crackers")
+person.versions.first["name"] # => ["Cookie Monster", "Mr. Crackers"]
 
 
 Copyright (c) 2009 Jacob Basham, released under the MIT license
