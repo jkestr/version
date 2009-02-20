@@ -1,3 +1,3 @@
 require 'version'
 require 'versionable'
-ActiveRecord::Base.send(:include, Pigeons::Acts::Versioned)
+ActiveRecord::Base.send(:include, Pigeons::Acts::Versionable)
